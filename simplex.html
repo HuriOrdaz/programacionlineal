@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación Lineal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d14;--surface:#13131f;--surface2:#1a1a2e;--border:#252540;
+  --accent:#3b82f6;--accent2:#60a5fa;--text:#e2e8f0;--muted:#94a3b8;
+  --success:#22c55e;--error:#ef4444;--warn:#f59e0b;
+  --art:#f97316;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+.header{padding:1.5rem 2rem;background:linear-gradient(135deg,#0d0d14 0%,#131328 100%);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1.5rem}
+.header-icon{width:44px;height:44px;flex-shrink:0}
+.header-text h1{font-size:1.6rem;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,#fff 30%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-text p{font-size:0.78rem;color:var(--muted);margin-top:2px;letter-spacing:0.04em}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;min-height:0}
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;gap:0.25rem}
+.sidebar-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:0 1.25rem;margin:0.75rem 0 0.4rem}
+.nav-btn{display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1.25rem;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:0.875rem;font-weight:500;width:100%;text-align:left;border-left:3px solid transparent;transition:all 0.15s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:rgba(59,130,246,0.12);color:var(--accent2);border-left-color:var(--accent)}
+.nav-btn svg{flex-shrink:0;opacity:0.7}
+.nav-btn.active svg{opacity:1}
+.content{flex:1;overflow-y:auto;padding:1.5rem}
+
+/* ── PANELS ── */
+.panel{display:none}.panel.active{display:block}
+
+/* ── METHOD HERO ── */
+.method-hero{display:flex;align-items:center;gap:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.25rem}
+.method-hero svg{flex-shrink:0}
+.method-hero h2{font-size:1.15rem;font-weight:700;color:var(--text)}
+.method-hero p{font-size:0.8rem;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.9rem}
+
+/* ── FORM ── */
+.config-row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+.cfg{display:flex;align-items:center;gap:0.5rem}
+.cfg label{font-size:0.82rem;color:var(--muted);font-weight:500}
+select,input[type=number],input[type=text]{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;
+  padding:6px 10px;font-size:0.85rem;color:var(--text);outline:none;transition:border-color 0.2s;
+}
+select:focus,input:focus{border-color:var(--accent)}
+select{cursor:pointer}
+.radio-grp{display:flex;gap:0.5rem}
+.rlbl{display:flex;align-items:center;gap:0.35rem;font-size:0.82rem;font-weight:500;cursor:pointer;padding:5px 12px;border:1.5px solid var(--border);border-radius:7px;color:var(--muted);transition:all 0.15s}
+.rlbl input{display:none}
+.rlbl.sel{border-color:var(--accent);background:rgba(59,130,246,0.15);color:var(--accent2)}
+.obj-row{display:flex;flex-wrap:wrap;align-items:center;gap:0.4rem;font-size:0.9rem}
+.vl{font-weight:700;color:var(--text)}
+.ci{width:64px;text-align:center}
+.ps{color:var(--muted)}
+.con-row{display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;margin-bottom:0.55rem;font-size:0.85rem}
+.rn{font-weight:700;color:var(--accent2);min-width:2rem}
+.op-sel{width:52px;text-align:center;padding:5px 2px}
+.rhs{width:72px;text-align:center}
+.hint{font-size:0.72rem;color:var(--muted);margin-top:0.4rem;font-style:italic}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 18px;border:none;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s}
+.btn-solve{background:var(--accent);color:#fff;font-size:0.95rem;padding:10px 0;width:100%;border-radius:9px;margin-top:0.5rem;letter-spacing:0.02em}
+.btn-solve:hover{background:var(--accent2)}
+
+/* ── TABLEAUX ── */
+.iter-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:0.75rem;overflow:hidden}
+.iter-hdr{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.iter-hdr h3{font-size:0.82rem;font-weight:700;color:var(--text)}
+.iter-info{font-size:0.73rem;color:var(--muted)}
+.chv{font-size:0.7rem;color:var(--muted);transition:transform 0.2s}.chv.open{transform:rotate(180deg)}
+.iter-body{padding:0.75rem;overflow:hidden}.iter-body.col{display:none}
+.tscroll{overflow-x:auto}
+table.st{border-collapse:collapse;font-size:0.78rem;min-width:100%}
+table.st th,table.st td{border:1px solid var(--border);padding:5px 10px;text-align:center;white-space:nowrap;background:var(--surface)}
+table.st thead th{background:var(--surface2);font-weight:700;color:var(--muted)}
+table.st tbody tr:last-child td{border-top:2px solid #3b3b60;font-weight:600}
+td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!important}
+.pc{background:#854d0e!important;font-weight:700;border:2px solid #f59e0b!important;color:#fef3c7!important}
+.pr td{background:rgba(59,130,246,0.07)!important}
+.pcol{background:rgba(234,179,8,0.07)!important}
+.ac{background:rgba(249,115,22,0.1)!important;color:var(--art)!important}
+
+/* ── SOLUTION ── */
+.sol-box{background:rgba(34,197,94,0.07);border:1.5px solid rgba(34,197,94,0.35);border-radius:10px;padding:1.1rem 1.25rem}
+.sol-box h3{color:var(--success);font-size:0.95rem;margin-bottom:0.7rem}
+.sol-vals{display:flex;flex-wrap:wrap;gap:0.6rem}
+.sc{background:var(--surface2);border:1.5px solid rgba(34,197,94,0.3);border-radius:7px;padding:5px 13px;font-size:0.875rem;font-weight:600;color:#86efac}
+.scz{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.5);font-size:0.95rem}
+.err{background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.35);border-radius:10px;padding:1rem 1.25rem;color:#fca5a5;font-size:0.875rem;font-weight:500}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;height:400px}
+.ct{width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:0.75rem}
+.ct th,.ct td{border:1px solid var(--border);padding:6px 13px;text-align:center;background:var(--surface)}
+.ct thead th{background:var(--surface2);font-weight:700;color:var(--muted)}
+.ct tr.opt td{background:rgba(34,197,94,0.1);font-weight:700;color:#86efac}
+
+/* ── DUAL TABLE ── */
+.dual-section{margin-top:1rem}
+.dual-section h4{font-size:0.8rem;font-weight:700;color:var(--accent2);margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.05em}
+.dual-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.dual-card{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:1rem}
+.dual-card h5{font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em}
+.dual-card p{font-size:0.83rem;line-height:1.7;font-family:monospace;color:var(--text)}
+.duality-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:4px 10px;font-size:0.78rem;color:var(--accent2);margin-top:0.75rem}
+
+@media(max-width:640px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;padding:0.5rem;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .sidebar-label{display:none}
+  .nav-btn{border-left:none;border-bottom:3px solid transparent;padding:0.5rem 0.75rem;white-space:nowrap}
+  .nav-btn.active{border-bottom-color:var(--accent);border-left-color:transparent}
+  .dual-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg class="header-icon" viewBox="0 0 44 44" fill="none">
+    <rect width="44" height="44" rx="10" fill="rgba(59,130,246,0.15)"/>
+    <line x1="8" y1="36" x2="8" y2="10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+    <line x1="8" y1="36" x2="38" y2="36" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+    <polyline points="12,28 18,18 25,22 34,10" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="34" cy="10" r="2.5" fill="#60a5fa"/>
+  </svg>
+  <div class="header-text">
+    <h1>Programación Lineal</h1>
+    <p>H. E. O. C. &nbsp;·&nbsp; Herramienta educativa</p>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-label">Método</div>
+
+    <button class="nav-btn active" onclick="switchTab('grafico',this)">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <line x1="3" y1="17" x2="3" y2="3" stroke="#60a5fa" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="3" y1="17" x2="17" y2="17" stroke="#60a5fa" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M3 14 L7 8 L12 11 L17 4" stroke="#60a5fa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <polygon points="3,14 3,17 7,17 7,8 12,8 12,11 17,11 17,17" fill="rgba(59,130,246,0.2)" stroke="none"/>
+      </svg>
+      Gráfico
+    </button>
+
+    <button class="nav-btn" onclick="switchTab('simplex',this)">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="#60a5fa" stroke-width="1.6"/>
+        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="#60a5fa" stroke-width="1.6"/>
+        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="#60a5fa" stroke-width="1.6"/>
+        <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="#60a5fa" stroke-width="1.6"/>
+      </svg>
+      Simplex
+    </button>
+
+    <button class="nav-btn" onclick="switchTab('granm',this)">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 17 L7 3 L10 12 L13 3 L17 17" stroke="#60a5fa" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      Gran M
+    </button>
+
+    <button class="nav-btn" onclick="switchTab('dual',this)">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M4 10 C4 6.7 6.7 4 10 4" stroke="#60a5fa" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M16 10 C16 13.3 13.3 16 10 16" stroke="#60a5fa" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M10 4 L12 2 M10 4 L8 2" stroke="#60a5fa" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M10 16 L12 18 M10 16 L8 18" stroke="#60a5fa" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="10" cy="10" r="1.5" fill="#60a5fa"/>
+      </svg>
+      Primal-Dual
+    </button>
+  </nav>
+
+  <div class="content">
+
+    <!-- ══ SIMPLEX ══ -->
+    <div id="tab-simplex" class="panel">
+      <div class="method-hero">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <rect width="60" height="60" rx="12" fill="rgba(59,130,246,0.08)"/>
+          <rect x="8" y="8" width="20" height="10" rx="2" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="1.2"/>
+          <rect x="32" y="8" width="20" height="10" rx="2" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="1.2"/>
+          <rect x="8" y="22" width="20" height="10" rx="2" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="1.2"/>
+          <rect x="32" y="22" width="20" height="10" rx="2" fill="rgba(59,130,246,0.1)" stroke="#3b82f6" stroke-width="1.2"/>
+          <rect x="8" y="36" width="44" height="10" rx="2" fill="rgba(234,179,8,0.2)" stroke="#f59e0b" stroke-width="1.2"/>
+          <path d="M22 36 L30 22 L38 36" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <div>
+          <h2>Método Simplex</h2>
+          <p>Resuelve problemas con restricciones ≤. Muestra cada iteración de la tabla con el elemento pivote resaltado. Acepta fracciones como 1/2, 3/4.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Configuración</div>
+        <div class="config-row">
+          <div class="cfg"><label>Variables:</label>
+            <select id="s-nv" onchange="gen('s')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Restricciones:</label>
+            <select id="s-nc" onchange="gen('s')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Objetivo:</label>
+            <div class="radio-grp">
+              <label class="rlbl sel" id="s-ml"><input type="radio" name="s-o" value="max" checked onchange="upR('s')"> Max</label>
+              <label class="rlbl" id="s-nl"><input type="radio" name="s-o" value="min" onchange="upR('s')"> Min</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="s-ic" style="display:none">
+        <div class="card-title">Función Objetivo</div>
+        <div class="obj-row" id="s-or"></div>
+        <div class="card-title" style="margin-top:1rem">Restricciones <span style="font-weight:400;text-transform:none;font-size:0.72rem">(solo ≤)</span></div>
+        <div id="s-cr"></div>
+        <p class="hint">Puedes escribir fracciones: 1/2, 3/4, -2/3</p>
+        <button class="btn btn-solve" onclick="solve('s')">Resolver</button>
+      </div>
+      <div id="s-res"></div>
+    </div>
+
+    <!-- ══ GRAN M ══ -->
+    <div id="tab-granm" class="panel">
+      <div class="method-hero">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <rect width="60" height="60" rx="12" fill="rgba(249,115,22,0.08)"/>
+          <path d="M10 48 L18 12 L26 34 L34 12 L42 48" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="10" cy="48" r="2" fill="#f97316"/><circle cx="42" cy="48" r="2" fill="#f97316"/>
+          <text x="44" y="20" font-size="10" fill="#f97316" font-family="serif" font-style="italic">M</text>
+          <line x1="8" y1="52" x2="52" y2="52" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2" opacity="0.4"/>
+        </svg>
+        <div>
+          <h2>Método Gran M (Big M)</h2>
+          <p>Maneja restricciones ≤, ≥ e =. Agrega variables artificiales con penalidad M para garantizar factibilidad. Las columnas artificiales se destacan en naranja.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Configuración</div>
+        <div class="config-row">
+          <div class="cfg"><label>Variables:</label>
+            <select id="g-nv" onchange="gen('g')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Restricciones:</label>
+            <select id="g-nc" onchange="gen('g')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Objetivo:</label>
+            <div class="radio-grp">
+              <label class="rlbl sel" id="g-ml"><input type="radio" name="g-o" value="max" checked onchange="upR('g')"> Max</label>
+              <label class="rlbl" id="g-nl"><input type="radio" name="g-o" value="min" onchange="upR('g')"> Min</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="g-ic" style="display:none">
+        <div class="card-title">Función Objetivo</div>
+        <div class="obj-row" id="g-or"></div>
+        <div class="card-title" style="margin-top:1rem">Restricciones</div>
+        <div id="g-cr"></div>
+        <p class="hint">Fracciones permitidas: 1/2, 3/4 · Operadores: ≤, ≥, =</p>
+        <button class="btn btn-solve" onclick="solve('g')">Resolver</button>
+      </div>
+      <div id="g-res"></div>
+    </div>
+
+    <!-- ══ GRÁFICO ══ -->
+    <div id="tab-grafico" class="panel active">
+      <div class="method-hero">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <rect width="60" height="60" rx="12" fill="rgba(34,197,94,0.08)"/>
+          <line x1="10" y1="50" x2="10" y2="10" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="10" y1="50" x2="52" y2="50" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round"/>
+          <polygon points="10,50 10,28 28,18 44,18 44,50" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="1.2"/>
+          <line x1="10" y1="28" x2="44" y2="18" stroke="#60a5fa" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="28" y1="50" x2="44" y2="18" stroke="#a78bfa" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="28" cy="34" r="3.5" fill="#ef4444"/>
+        </svg>
+        <div>
+          <h2>Método Gráfico</h2>
+          <p>Grafica la región factible para problemas con 2 variables. Identifica todos los puntos esquina, evalúa la función objetivo y señala el óptimo.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Configuración</div>
+        <div class="config-row">
+          <div class="cfg"><label>Variables:</label><span style="font-size:0.85rem;font-weight:700;color:var(--accent2)">2 (fijo)</span></div>
+          <div class="cfg"><label>Restricciones:</label>
+            <select id="gr-nc" onchange="gen('gr')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Objetivo:</label>
+            <div class="radio-grp">
+              <label class="rlbl sel" id="gr-ml"><input type="radio" name="gr-o" value="max" checked onchange="upR('gr')"> Max</label>
+              <label class="rlbl" id="gr-nl"><input type="radio" name="gr-o" value="min" onchange="upR('gr')"> Min</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="gr-ic" style="display:none">
+        <div class="card-title">Función Objetivo</div>
+        <div class="obj-row" id="gr-or"></div>
+        <div class="card-title" style="margin-top:1rem">Restricciones</div>
+        <div id="gr-cr"></div>
+        <p class="hint">Fracciones permitidas: 1/2, 3/4</p>
+        <button class="btn btn-solve" onclick="solve('gr')">Resolver</button>
+      </div>
+      <div id="gr-res"></div>
+    </div>
+
+    <!-- ══ PRIMAL-DUAL ══ -->
+    <div id="tab-dual" class="panel">
+      <div class="method-hero">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <rect width="60" height="60" rx="12" fill="rgba(168,85,247,0.08)"/>
+          <rect x="8" y="14" width="20" height="14" rx="2.5" fill="rgba(59,130,246,0.18)" stroke="#3b82f6" stroke-width="1.4"/>
+          <text x="11" y="24" font-size="8" fill="#60a5fa" font-family="serif" font-style="italic">Primal</text>
+          <rect x="32" y="32" width="20" height="14" rx="2.5" fill="rgba(168,85,247,0.18)" stroke="#a855f7" stroke-width="1.4"/>
+          <text x="35" y="42" font-size="8" fill="#c084fc" font-family="serif" font-style="italic">Dual</text>
+          <path d="M28 21 Q35 21 35 32" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="3,2" fill="none"/>
+          <path d="M32 39 Q25 39 25 28" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="3,2" fill="none"/>
+        </svg>
+        <div>
+          <h2>Método Primal-Dual</h2>
+          <p>Construye automáticamente el problema dual. Resuelve ambos con Simplex y verifica el Teorema de Dualidad Fuerte: Z* = W*. Muestra precios sombra y holguras complementarias.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Configuración (Problema Primal — solo ≤)</div>
+        <div class="config-row">
+          <div class="cfg"><label>Variables:</label>
+            <select id="d-nv" onchange="gen('d')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Restricciones:</label>
+            <select id="d-nc" onchange="gen('d')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Objetivo:</label>
+            <div class="radio-grp">
+              <label class="rlbl sel" id="d-ml"><input type="radio" name="d-o" value="max" checked onchange="upR('d')"> Max</label>
+              <label class="rlbl" id="d-nl"><input type="radio" name="d-o" value="min" onchange="upR('d')"> Min</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="d-ic" style="display:none">
+        <div class="card-title">Función Objetivo (Primal)</div>
+        <div class="obj-row" id="d-or"></div>
+        <div class="card-title" style="margin-top:1rem">Restricciones (Primal)</div>
+        <div id="d-cr"></div>
+        <p class="hint">Fracciones permitidas: 1/2, 3/4</p>
+        <button class="btn btn-solve" onclick="solve('d')">Resolver Primal y Dual</button>
+      </div>
+      <div id="d-res"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+// ─────────────────────────────────────────
+//  CONSTANTS & UTILS
+// ─────────────────────────────────────────
+const BIG_M=1e6,EPS=1e-8,MAXIT=100;
+
+function parseFrac(s){
+  if(s===''||s==null)return NaN;
+  s=String(s).trim();
+  if(s.includes('/')){
+    const [a,b]=s.split('/').map(Number);
+    if(isNaN(a)||isNaN(b)||b===0)return NaN;
+    return a/b;
+  }
+  return parseFloat(s);
+}
+
+function fmtN(v){
+  if(Math.abs(v)<EPS)return'0';
+  // Try to show nice fractions for common values
+  const denoms=[2,3,4,5,6,7,8,9,10];
+  for(const d of denoms){
+    const n=Math.round(v*d);
+    if(Math.abs(n/d-v)<1e-7&&n!==0){
+      if(d===1)return String(n);
+      if(n%d===0)return String(n/d);
+      return n+'/'+d;
+    }
+  }
+  const r=Math.round(v*10000)/10000;
+  return r%1===0?r.toString():r.toFixed(4).replace(/\.?0+$/,'');
+}
+
+function fmtC(v){
+  if(Math.abs(v)<EPS)return'0';
+  const mp=Math.round(v/BIG_M*1000)/1000;
+  const rest=Math.round((v-mp*BIG_M)*10000)/10000;
+  if(Math.abs(mp)>0.0001){
+    let s=Math.abs(mp-1)<0.001?'M':Math.abs(mp+1)<0.001?'-M':fmtN(mp)+'M';
+    if(Math.abs(rest)>EPS)s+=(rest>0?'+':'')+fmtN(rest);
+    return s;
+  }
+  return fmtN(v);
+}
+
+function dc2d(a){return a.map(r=>[...r]);}
+
+// ─────────────────────────────────────────
+//  SimplexSolver
+// ─────────────────────────────────────────
+class SimplexSolver{
+  constructor(c,A,b,isMax){
+    this.c=c.slice();this.A=A.map(r=>r.slice());this.b=b.slice();
+    this.isMax=isMax;this.n=c.length;this.m=b.length;
+    this.snaps=[];this.varNames=[];
+  }
+  build(){
+    const{n,m}=this;
+    this.tc=n+m+1;this.ri=n+m;
+    this.T=[];this.basis=[];
+    for(let i=0;i<m;i++){
+      const row=new Array(this.tc).fill(0);
+      for(let j=0;j<n;j++)row[j]=this.A[i][j];
+      row[n+i]=1;row[this.ri]=this.b[i];
+      this.T.push(row);this.basis.push(n+i);
+    }
+    const obj=new Array(this.tc).fill(0);
+    const sg=this.isMax?-1:1;
+    for(let j=0;j<n;j++)obj[j]=sg*this.c[j];
+    this.T.push(obj);
+    this.varNames=[];
+    for(let j=0;j<n;j++)this.varNames.push('x'+(j+1));
+    for(let j=0;j<m;j++)this.varNames.push('s'+(j+1));
+    this.snap('Tableau Inicial',-1,-1);
+  }
+  snap(lbl,pr,pc){
+    this.snaps.push({lbl,T:dc2d(this.T),basis:this.basis.slice(),
+      vn:this.varNames.slice(),pr,pc,ri:this.ri});
+  }
+  pivCol(){
+    const obj=this.T[this.m];let mv=-EPS,c=-1;
+    for(let j=0;j<this.ri;j++)if(obj[j]<mv){mv=obj[j];c=j;}
+    return c;
+  }
+  pivRow(col){
+    let mr=Infinity,row=-1;
+    for(let i=0;i<this.m;i++){
+      const e=this.T[i][col];
+      if(e>EPS){
+        const r=this.T[i][this.ri]/e;
+        if(r<mr-EPS||(Math.abs(r-mr)<EPS&&(row===-1||this.basis[i]<this.basis[row]))){mr=r;row=i;}
+      }
+    }
+    return row;
+  }
+  doPivot(pr,pc){
+    const pv=this.T[pr][pc];
+    for(let j=0;j<this.tc;j++)this.T[pr][j]/=pv;
+    for(let i=0;i<=this.m;i++){
+      if(i===pr)continue;
+      const f=this.T[i][pc];if(Math.abs(f)<EPS)continue;
+      for(let j=0;j<this.tc;j++)this.T[i][j]-=f*this.T[pr][j];
+    }
+    this.basis[pr]=pc;
+  }
+  solve(){
+    this.build();
+    for(let it=1;it<=MAXIT;it++){
+      const pc=this.pivCol();
+      if(pc===-1)return this.extract('optimal');
+      const pr=this.pivRow(pc);
+      if(pr===-1)return{status:'unbounded',snaps:this.snaps};
+      const en=this.varNames[pc],lv=this.varNames[this.basis[pr]];
+      this.doPivot(pr,pc);
+      this.snap(`Iteración ${it} — Entra: ${en}, Sale: ${lv}`,pr,pc);
+    }
+    return{status:'max_iter',snaps:this.snaps};
+  }
+  extract(status){
+    const sol=new Array(this.n+this.m).fill(0);
+    for(let i=0;i<this.m;i++)sol[this.basis[i]]=this.T[i][this.ri];
+    const rawZ=this.T[this.m][this.ri];
+    const Z=this.isMax?rawZ:-rawZ;
+    // Shadow prices = dual variables = obj row coefficients of slack vars (for max)
+    const shadows=[];
+    for(let i=0;i<this.m;i++){
+      const sc=this.n+i;
+      shadows.push(this.isMax?-this.T[this.m][sc]:this.T[this.m][sc]);
+    }
+    return{status,snaps:this.snaps,sol,Z,n:this.n,shadows,T:dc2d(this.T),basis:this.basis.slice()};
+  }
+}
+
+// ─────────────────────────────────────────
+//  BigMSolver
+// ─────────────────────────────────────────
+class BigMSolver extends SimplexSolver{
+  constructor(c,A,b,types,isMax){super(c,A,b,isMax);this.types=types;this.artCols=[];}
+  build(){
+    const{n,m}=this;const sg=this.isMax?-1:1;
+    let ptr=n;const info=[];this.varNames=[];
+    for(let j=0;j<n;j++)this.varNames.push('x'+(j+1));
+    this.types.forEach(t=>{
+      const inf={};
+      if(t==='<='){inf.slack=ptr++;this.varNames.push('s'+(ptr-n));}
+      else if(t==='>='){
+        inf.surplus=ptr++;this.varNames.push('e'+(ptr-n));
+        inf.art=ptr++;this.varNames.push('a'+(this.artCols.length+1));
+        this.artCols.push(ptr-1);
+      }else{
+        inf.art=ptr++;this.varNames.push('a'+(this.artCols.length+1));
+        this.artCols.push(ptr-1);
+      }
+      info.push(inf);
+    });
+    this.tc=ptr+1;this.ri=ptr;this.T=[];this.basis=[];
+    for(let i=0;i<m;i++){
+      const row=new Array(this.tc).fill(0);
+      for(let j=0;j<n;j++)row[j]=this.A[i][j];
+      const inf=info[i];
+      if(inf.slack!==undefined){row[inf.slack]=1;this.basis.push(inf.slack);}
+      if(inf.surplus!==undefined)row[inf.surplus]=-1;
+      if(inf.art!==undefined){row[inf.art]=1;if(inf.slack===undefined)this.basis.push(inf.art);}
+      row[this.ri]=this.b[i];this.T.push(row);
+    }
+    const obj=new Array(this.tc).fill(0);
+    for(let j=0;j<n;j++)obj[j]=sg*this.c[j];
+    this.artCols.forEach(col=>obj[col]=(this.isMax?1:-1)*BIG_M);
+    for(let i=0;i<m;i++){
+      const inf=info[i];
+      if(inf.art!==undefined){
+        const f=obj[inf.art];
+        if(Math.abs(f)>EPS)for(let j=0;j<this.tc;j++)obj[j]-=f*this.T[i][j];
+      }
+    }
+    this.T.push(obj);
+    this.snap('Tableau Inicial',-1,-1);
+  }
+  solve(){
+    this.build();
+    for(let it=1;it<=MAXIT;it++){
+      const pc=this.pivCol();
+      if(pc===-1){
+        const inf=this.artCols.some(ac=>{const bi=this.basis.indexOf(ac);return bi>=0&&this.T[bi][this.ri]>EPS;});
+        if(inf)return{status:'infeasible',snaps:this.snaps};
+        return this.extract('optimal');
+      }
+      const pr=this.pivRow(pc);
+      if(pr===-1)return{status:'unbounded',snaps:this.snaps};
+      const en=this.varNames[pc],lv=this.varNames[this.basis[pr]];
+      this.doPivot(pr,pc);
+      this.snap(`Iteración ${it} — Entra: ${en}, Sale: ${lv}`,pr,pc);
+    }
+    return{status:'max_iter',snaps:this.snaps};
+  }
+}
+
+// ─────────────────────────────────────────
+//  GraphicalSolver
+// ─────────────────────────────────────────
+class GraphicalSolver{
+  constructor(c,A,b,types,isMax){this.c=c;this.A=A;this.b=b;this.types=types;this.isMax=isMax;}
+  ix(a1,b1,c1,a2,b2,c2){
+    const d=a1*b2-a2*b1;if(Math.abs(d)<EPS)return null;
+    return{x:(c1*b2-c2*b1)/d,y:(a1*c2-a2*c1)/d};
+  }
+  ok(p){
+    if(p.x<-EPS||p.y<-EPS)return false;
+    for(let i=0;i<this.A.length;i++){
+      const lhs=this.A[i][0]*p.x+this.A[i][1]*p.y;
+      if(this.types[i]==='<='&&lhs>this.b[i]+EPS)return false;
+      if(this.types[i]=='>='&&lhs<this.b[i]-EPS)return false;
+      if(this.types[i]==='='&&Math.abs(lhs-this.b[i])>EPS)return false;
+    }
+    return true;
+  }
+  hull(pts){
+    if(pts.length<=2)return pts;
+    const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length;
+    const cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+    return[...pts].sort((a,b)=>Math.atan2(a.y-cy,a.x-cx)-Math.atan2(b.y-cy,b.x-cx));
+  }
+  solve(){
+    const lines=this.A.map((r,i)=>({a:r[0],b:r[1],c:this.b[i]}));
+    lines.push({a:1,b:0,c:0},{a:0,b:1,c:0});
+    const cands=[];
+    for(let i=0;i<lines.length;i++)for(let j=i+1;j<lines.length;j++){
+      const p=this.ix(lines[i].a,lines[i].b,lines[i].c,lines[j].a,lines[j].b,lines[j].c);
+      if(p)cands.push({x:Math.round(p.x*1e8)/1e8,y:Math.round(p.y*1e8)/1e8});
+    }
+    const uniq=[];
+    cands.forEach(p=>{if(!uniq.some(u=>Math.abs(u.x-p.x)<1e-6&&Math.abs(u.y-p.y)<1e-6))uniq.push(p);});
+    const feas=uniq.filter(p=>this.ok(p));
+    if(!feas.length)return{status:'infeasible'};
+    feas.forEach(p=>p.Z=this.c[0]*p.x+this.c[1]*p.y);
+    const opt=feas.reduce((b,p)=>(this.isMax?p.Z>b.Z:p.Z<b.Z)?p:b);
+    return{status:'optimal',feas,opt,hull:this.hull(feas)};
+  }
+}
+
+// ─────────────────────────────────────────
+//  RENDERERS
+// ─────────────────────────────────────────
+function renderTableaux(snaps,artCols,cid){
+  const div=document.getElementById(cid);
+  snaps.forEach((s,idx)=>{
+    const isLast=idx===snaps.length-1;
+    const collapsed=false;
+    const blk=document.createElement('div');blk.className='iter-block';
+    const hdr=document.createElement('div');hdr.className='iter-hdr';
+    hdr.innerHTML=`<h3>${s.lbl}</h3><div style="display:flex;align-items:center;gap:.6rem">
+      ${s.pc>=0?`<span class="iter-info">Pivote (${s.pr+1},${s.pc+1})</span>`:''}
+      <span class="chv ${collapsed?'':'open'}">&#9660;</span></div>`;
+    const body=document.createElement('div');body.className='iter-body'+(collapsed?' col':'');
+    const scroll=document.createElement('div');scroll.className='tscroll';
+    const tbl=document.createElement('table');tbl.className='st';
+    const thead=document.createElement('thead');
+    const hr=document.createElement('tr');hr.innerHTML='<th>Base</th>';
+    s.vn.forEach((nm,j)=>{
+      const th=document.createElement('th');th.textContent=nm;
+      if(artCols&&artCols.includes(j))th.classList.add('ac');
+      if(j===s.pc)th.style.background='rgba(234,179,8,0.1)';
+      hr.appendChild(th);
+    });
+    hr.innerHTML+='<th>RHS</th>';thead.appendChild(hr);tbl.appendChild(thead);
+    const tbody=document.createElement('tbody');
+    s.T.forEach((row,i)=>{
+      const tr=document.createElement('tr');
+      if(i===s.pr)tr.classList.add('pr');
+      const bth=document.createElement('th');bth.className='bc';
+      bth.textContent=i===s.T.length-1?'Z':s.vn[s.basis[i]]||'?';
+      tr.appendChild(bth);
+      row.forEach((v,j)=>{
+        if(j>s.ri)return;
+        const td=document.createElement('td');
+        td.textContent=j<s.vn.length?fmtC(v):fmtN(v);
+        if(artCols&&artCols.includes(j))td.classList.add('ac');
+        if(i===s.pr&&j===s.pc)td.classList.add('pc');
+        else if(j===s.pc)td.classList.add('pcol');
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);scroll.appendChild(tbl);body.appendChild(scroll);
+    blk.appendChild(hdr);blk.appendChild(body);div.appendChild(blk);
+    hdr.addEventListener('click',()=>{
+      body.classList.toggle('col');
+      hdr.querySelector('.chv').classList.toggle('open');
+    });
+  });
+}
+
+function renderSol(res,cid){
+  const div=document.getElementById(cid);
+  if(res.status==='unbounded'){div.innerHTML=`<div class="err">El problema no tiene solución acotada (no acotado). Verifique las restricciones.</div>`;return;}
+  if(res.status==='infeasible'){div.innerHTML=`<div class="err">El problema no tiene región factible (infactible). Revise las restricciones.</div>`;return;}
+  if(res.status==='max_iter'){div.innerHTML=`<div class="err">Se alcanzó el límite de ${MAXIT} iteraciones. Posible ciclo.</div>`;return;}
+  const box=document.createElement('div');box.className='card sol-box';
+  box.innerHTML='<h3>Solución Óptima</h3>';
+  const vals=document.createElement('div');vals.className='sol-vals';
+  for(let j=0;j<res.n;j++){
+    const c=document.createElement('div');c.className='sc';
+    c.textContent=`x${j+1} = ${fmtN(res.sol[j])}`;vals.appendChild(c);
+  }
+  const z=document.createElement('div');z.className='sc scz';
+  z.textContent=`Z = ${fmtN(res.Z)}`;vals.appendChild(z);
+  box.appendChild(vals);div.appendChild(box);
+}
+
+let chartInst=null;
+function renderChart(res,cid){
+  const div=document.getElementById(cid);
+  if(res.status==='infeasible'){div.innerHTML=`<div class="err">No existe región factible.</div>`;return;}
+  const{feas,opt,hull,A,b,types,c}=res;
+  let mx=10;b.forEach(v=>{if(v>mx)mx=v;});
+  feas.forEach(p=>{if(p.x>mx)mx=p.x;if(p.y>mx)mx=p.y;});
+  const pm=mx*1.4;
+  const COLS=['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6'];
+  const ds=[];
+  A.forEach((row,i)=>{
+    const pts=[];const a1=row[0],a2=row[1],bi=b[i];
+    if(Math.abs(a2)>EPS){pts.push({x:0,y:bi/a2});pts.push({x:pm,y:(bi-a1*pm)/a2});}
+    else if(Math.abs(a1)>EPS){const xi=bi/a1;pts.push({x:xi,y:0});pts.push({x:xi,y:pm});}
+    ds.push({label:`R${i+1}: ${fmtC(a1)}x₁+${fmtC(a2)}x₂${types[i]}${fmtN(bi)}`,
+      data:pts,type:'line',borderColor:COLS[i%COLS.length],borderWidth:2,pointRadius:0,fill:false,tension:0});
+  });
+  if(hull.length>=3){
+    const poly=[...hull.map(p=>({x:p.x,y:p.y})),{x:hull[0].x,y:hull[0].y}];
+    ds.push({label:'Región factible',data:poly,type:'line',
+      borderColor:'rgba(34,197,94,0.4)',backgroundColor:'rgba(34,197,94,0.12)',
+      fill:true,tension:0,pointRadius:0,borderWidth:1.5});
+  }
+  ds.push({label:'Puntos esquina',data:feas.map(p=>({x:p.x,y:p.y})),
+    type:'scatter',radius:7,backgroundColor:'#3b82f6',borderColor:'#1d4ed8',borderWidth:2});
+  ds.push({label:`Óptimo (${fmtN(opt.x)},${fmtN(opt.y)})`,data:[{x:opt.x,y:opt.y}],
+    type:'scatter',pointStyle:'star',radius:14,backgroundColor:'#ef4444',borderColor:'#dc2626',borderWidth:2});
+
+  const lblPlugin={id:'cl',afterDatasetsDraw(ch){
+    const ctx=ch.ctx;const meta=ch.getDatasetMeta(ds.length-2);
+    ctx.save();
+    meta.data.forEach((pt,i)=>{
+      const d=feas[i];
+      ctx.font='bold 11px sans-serif';ctx.fillStyle='#e2e8f0';ctx.textAlign='center';
+      ctx.fillText(`(${fmtN(d.x)},${fmtN(d.y)})`,pt.x,pt.y-14);
+      ctx.font='10px sans-serif';ctx.fillStyle='#94a3b8';
+      ctx.fillText(`Z=${fmtN(d.Z)}`,pt.x,pt.y-3);
+    });
+    ctx.restore();
+  }};
+
+  const cw=document.createElement('div');cw.className='card';
+  cw.innerHTML=`<div class="card-title">Región Factible</div><div class="chart-wrap"><canvas id="lpc"></canvas></div>`;
+  div.appendChild(cw);
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  chartInst=new Chart(cw.querySelector('#lpc'),{
+    type:'scatter',data:{datasets:ds},plugins:[lblPlugin],
+    options:{
+      scales:{
+        x:{min:0,max:pm,grid:{color:'rgba(255,255,255,0.05)'},
+          title:{display:true,text:'x₁',color:'#94a3b8',font:{weight:'bold'}},
+          ticks:{color:'#94a3b8'}},
+        y:{min:0,max:pm,grid:{color:'rgba(255,255,255,0.05)'},
+          title:{display:true,text:'x₂',color:'#94a3b8',font:{weight:'bold'}},
+          ticks:{color:'#94a3b8'}}
+      },
+      plugins:{
+        legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},boxWidth:14}},
+        tooltip:{callbacks:{label:ctx=>{
+          if(ctx.datasetIndex===ds.length-2){const d=feas[ctx.dataIndex];return`(${fmtN(d.x)},${fmtN(d.y)}) Z=${fmtN(d.Z)}`;}
+          if(ctx.datasetIndex===ds.length-1)return`Óptimo: Z=${fmtN(opt.Z)}`;
+          return`(${fmtN(ctx.parsed.x)},${fmtN(ctx.parsed.y)})`;
+        }}}
+      }
+    }
+  });
+
+  const tw=document.createElement('div');tw.className='card';
+  tw.innerHTML=`<div class="card-title">Puntos Esquina</div>`;
+  const tbl=document.createElement('table');tbl.className='ct';
+  tbl.innerHTML=`<thead><tr><th>Punto</th><th>x₁</th><th>x₂</th><th>Z</th><th></th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  feas.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    const isOpt=Math.abs(p.x-opt.x)<1e-5&&Math.abs(p.y-opt.y)<1e-5;
+    if(isOpt)tr.classList.add('opt');
+    tr.innerHTML=`<td>P${i+1}</td><td>${fmtN(p.x)}</td><td>${fmtN(p.y)}</td><td>${fmtN(p.Z)}</td><td>${isOpt?'★ Óptimo':''}</td>`;
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);tw.appendChild(tbl);
+
+  const sb=document.createElement('div');sb.className='card sol-box';
+  sb.innerHTML=`<h3>Solución Óptima</h3><div class="sol-vals">
+    <div class="sc">x₁ = ${fmtN(opt.x)}</div>
+    <div class="sc">x₂ = ${fmtN(opt.y)}</div>
+    <div class="sc scz">Z = ${fmtN(opt.Z)}</div></div>`;
+
+  div.appendChild(tw);div.appendChild(sb);
+}
+
+function renderDual(primalRes,primalInputs,cid){
+  const div=document.getElementById(cid);
+  if(primalRes.status!=='optimal'){renderSol(primalRes,cid);return;}
+  const{c,A,b,isMax,n,m}=primalInputs;
+
+  // Build dual problem
+  // Primal: max cx, Ax<=b, x>=0  ↔  Dual: min b'y, A'y>=c, y>=0
+  // Dual: min b'y s.t. for each x_j: sum_i A[i][j]*y[i] >= c[j]
+  const dualC=b.slice();  // dual objective = b (to minimize)
+  const dualA=[];  // dual constraints: transpose of A (m rows → n constraints)
+  for(let j=0;j<n;j++){
+    const row=[];for(let i=0;i<m;i++)row.push(A[i][j]);
+    dualA.push(row);
+  }
+  const dualB=c.slice();  // dual RHS = primal c
+  const dualTypes=new Array(n).fill('>=');
+
+  // Solve dual with BigM (min b'y, A'y >= c, y >= 0 → use BigM min)
+  const dualSolver=new BigMSolver(dualC,dualA,dualB,dualTypes,false);
+  const dualRes=dualSolver.solve();
+
+  // Format primal problem text
+  const primalStr=`Max Z = ${c.map((ci,j)=>`${fmtN(ci)}x${j+1}`).join(' + ')}\n`+
+    `s.a.\n`+A.map((row,i)=>row.map((a,j)=>`${fmtN(a)}x${j+1}`).join(' + ')+` ≤ ${fmtN(b[i])}`).join('\n')+
+    `\nx₁,...,x${n} ≥ 0`;
+
+  const dualStr=`Min W = ${b.map((bi,i)=>`${fmtN(bi)}y${i+1}`).join(' + ')}\n`+
+    `s.a.\n`+dualA.map((row,j)=>row.map((a,i)=>`${fmtN(a)}y${i+1}`).join(' + ')+` ≥ ${fmtN(dualB[j])}`).join('\n')+
+    `\ny₁,...,y${m} ≥ 0`;
+
+  // Shadow prices from primal solution
+  const shadows=primalRes.shadows||[];
+
+  // Build HTML
+  const dg=document.createElement('div');dg.className='card';
+  dg.innerHTML=`<div class="card-title">Problema Primal y su Dual</div>
+    <div class="dual-grid">
+      <div class="dual-card"><h5>Problema Primal</h5><p>${primalStr.replace(/\n/g,'<br>')}</p></div>
+      <div class="dual-card" style="border-color:rgba(168,85,247,0.3)"><h5 style="color:#c084fc">Problema Dual (derivado)</h5><p style="color:#e2e8f0">${dualStr.replace(/\n/g,'<br>')}</p></div>
+    </div>`;
+  div.appendChild(dg);
+
+  // Primal tableaux
+  const pt=document.createElement('div');pt.className='card';
+  pt.innerHTML='<div class="card-title">Solución del Primal — Iteraciones</div>';
+  div.appendChild(pt);
+  renderTableaux(primalRes.snaps,[],pt.id||'pt-inner');
+  // Append tableaux directly
+  primalRes.snaps.forEach((s,idx)=>{
+    const isLast=idx===primalRes.snaps.length-1;
+    const collapsed=false;
+    const blk=document.createElement('div');blk.className='iter-block';
+    const hdr=document.createElement('div');hdr.className='iter-hdr';
+    hdr.innerHTML=`<h3>${s.lbl}</h3><div style="display:flex;align-items:center;gap:.6rem">
+      ${s.pc>=0?`<span class="iter-info">Pivote (${s.pr+1},${s.pc+1})</span>`:''}
+      <span class="chv ${collapsed?'':'open'}">&#9660;</span></div>`;
+    const body=document.createElement('div');body.className='iter-body'+(collapsed?' col':'');
+    const scroll=document.createElement('div');scroll.className='tscroll';
+    const tbl=document.createElement('table');tbl.className='st';
+    const thead=document.createElement('thead');
+    const hr=document.createElement('tr');hr.innerHTML='<th>Base</th>';
+    s.vn.forEach((nm,j)=>{const th=document.createElement('th');th.textContent=nm;if(j===s.pc)th.style.background='rgba(234,179,8,0.1)';hr.appendChild(th);});
+    hr.innerHTML+='<th>RHS</th>';thead.appendChild(hr);tbl.appendChild(thead);
+    const tbody=document.createElement('tbody');
+    s.T.forEach((row,i)=>{
+      const tr=document.createElement('tr');if(i===s.pr)tr.classList.add('pr');
+      const bth=document.createElement('th');bth.className='bc';bth.textContent=i===s.T.length-1?'Z':s.vn[s.basis[i]]||'?';tr.appendChild(bth);
+      row.forEach((v,j)=>{if(j>s.ri)return;const td=document.createElement('td');td.textContent=j<s.vn.length?fmtC(v):fmtN(v);if(i===s.pr&&j===s.pc)td.classList.add('pc');else if(j===s.pc)td.classList.add('pcol');tr.appendChild(td);});
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);scroll.appendChild(tbl);body.appendChild(scroll);
+    blk.appendChild(hdr);blk.appendChild(body);pt.appendChild(blk);
+    hdr.addEventListener('click',()=>{body.classList.toggle('col');hdr.querySelector('.chv').classList.toggle('open');});
+  });
+
+  // Results
+  const resCard=document.createElement('div');resCard.className='card';
+  const dualOK=dualRes.status==='optimal';
+  const dualZ=dualOK?fmtN(dualRes.Z):'N/D';
+  const primalZ=fmtN(primalRes.Z);
+  const strongDuality=dualOK&&Math.abs(primalRes.Z-dualRes.Z)<0.01;
+
+  let shadowHtml=shadows.map((s,i)=>`<div class="sc" style="border-color:rgba(168,85,247,0.4);color:#c084fc">y${i+1} = ${fmtN(s)}</div>`).join('');
+
+  resCard.innerHTML=`<div class="card-title">Resultados y Teorema de Dualidad</div>
+    <div class="dual-grid">
+      <div class="dual-card">
+        <h5>Solución Primal</h5>
+        <div class="sol-vals" style="margin-top:.5rem">
+          ${Array.from({length:n},(_,j)=>`<div class="sc">x${j+1} = ${fmtN(primalRes.sol[j])}</div>`).join('')}
+          <div class="sc scz">Z* = ${primalZ}</div>
+        </div>
+      </div>
+      <div class="dual-card" style="border-color:rgba(168,85,247,0.3)">
+        <h5 style="color:#c084fc">Variables Duales (Precios Sombra)</h5>
+        <div class="sol-vals" style="margin-top:.5rem">
+          ${shadowHtml}
+          <div class="sc scz" style="border-color:rgba(168,85,247,0.4);color:#c084fc">W* = ${dualZ}</div>
+        </div>
+      </div>
+    </div>
+    <div class="duality-badge">
+      ${strongDuality?'✓ Dualidad Fuerte verificada: Z* = W* = '+primalZ:'⚠ Verifique la dualidad manualmente'}
+    </div>
+    <div style="margin-top:.9rem">
+      <div class="card-title">Holguras Complementarias</div>
+      <p style="font-size:.8rem;color:var(--muted);line-height:1.8">
+        Para cada restricción i: si <strong style="color:var(--text)">y<sub>i</sub> > 0</strong> → la restricción es activa (holgura = 0).<br>
+        Para cada variable j: si <strong style="color:var(--text)">x<sub>j</sub> > 0</strong> → la restricción dual es activa.
+      </p>
+      <table class="ct" style="margin-top:.6rem">
+        <thead><tr><th>Restricción</th><th>y<sub>i</sub></th><th>Holgura primal</th><th>Activa?</th></tr></thead>
+        <tbody>${shadows.map((yi,i)=>{
+          const slk=fmtN(primalRes.sol[n+i]??0);
+          const active=Math.abs(parseFrac(slk))<0.001;
+          return`<tr ${active?'class="opt"':''}><td>R${i+1}</td><td>${fmtN(yi)}</td><td>${slk}</td><td>${active?'Sí':'No'}</td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  div.appendChild(resCard);
+}
+
+// ─────────────────────────────────────────
+//  UI CONTROLLER
+// ─────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function upR(p){
+  const v=document.querySelector(`input[name="${p}-o"]:checked`)?.value;
+  document.getElementById(p+'-ml')?.classList.toggle('sel',v==='max');
+  document.getElementById(p+'-nl')?.classList.toggle('sel',v==='min');
+}
+
+function getNV(p){return p==='gr'?2:parseInt(document.getElementById(p+'-nv').value);}
+function getNC(p){return parseInt(document.getElementById(p+'-nc').value);}
+
+function gen(p){
+  const n=getNV(p),m=getNC(p);
+  const card=document.getElementById(p+'-ic');card.style.display='block';
+  const or=document.getElementById(p+'-or');or.innerHTML='<span class="vl">Z =</span>';
+  for(let j=0;j<n;j++){
+    if(j>0)or.innerHTML+='<span class="ps">+</span>';
+    or.innerHTML+=`<input type="text" class="ci" id="${p}-c${j}" placeholder="c${j+1}">
+      <span class="vl">x<sub>${j+1}</sub></span>`;
+  }
+  const cr=document.getElementById(p+'-cr');cr.innerHTML='';
+  for(let i=0;i<m;i++){
+    const row=document.createElement('div');row.className='con-row';
+    let html=`<span class="rn">R${i+1}:</span>`;
+    for(let j=0;j<n;j++){
+      if(j>0)html+='<span class="ps">+</span>';
+      html+=`<input type="text" class="ci" id="${p}-a${i}${j}" placeholder="a${i+1}${j+1}">
+        <span class="vl">x<sub>${j+1}</sub></span>`;
+    }
+    const ops=(p==='g')?`<option value="<=">≤</option><option value=">=">≥</option><option value="=">=</option>`:
+      `<option value="<=">≤</option>`;
+    html+=`<select id="${p}-op${i}" class="op-sel">${ops}</select>`;
+    html+=`<input type="text" class="rhs" id="${p}-b${i}" placeholder="b${i+1}">`;
+    row.innerHTML=html;cr.appendChild(row);
+  }
+}
+
+function collect(p){
+  const n=getNV(p),m=getNC(p);
+  const isMax=document.querySelector(`input[name="${p}-o"]:checked`)?.value!=='min';
+  const c=[];
+  for(let j=0;j<n;j++){
+    const v=parseFrac(document.getElementById(`${p}-c${j}`).value);
+    if(isNaN(v))throw new Error(`Ingresa el coeficiente c${j+1}`);c.push(v);
+  }
+  const A=[],b=[],types=[];
+  for(let i=0;i<m;i++){
+    const row=[];
+    for(let j=0;j<n;j++){
+      const v=parseFrac(document.getElementById(`${p}-a${i}${j}`).value);
+      if(isNaN(v))throw new Error(`Ingresa a${i+1}${j+1}`);row.push(v);
+    }
+    const bv=parseFrac(document.getElementById(`${p}-b${i}`).value);
+    if(isNaN(bv))throw new Error(`Ingresa b${i+1}`);
+    if((p==='s'||p==='gr'||p==='d')&&bv<0)throw new Error(`b${i+1} debe ser ≥ 0`);
+    A.push(row);b.push(bv);types.push(document.getElementById(`${p}-op${i}`).value);
+  }
+  return{c,A,b,types,isMax,n,m};
+}
+
+function solve(p){
+  const rid=p+'-res';
+  const div=document.getElementById(rid);div.innerHTML='';
+  let inp;
+  try{inp=collect(p);}catch(e){div.innerHTML=`<div class="err">${e.message}</div>`;return;}
+  const{c,A,b,types,isMax,n}=inp;
+
+  if(p==='s'){
+    const sv=new SimplexSolver(c,A,b,isMax);const res=sv.solve();
+    renderTableaux(res.snaps,[],rid);renderSol(res,rid);
+  }else if(p==='g'){
+    const sv=new BigMSolver(c,A,b,types,isMax);const res=sv.solve();
+    renderTableaux(res.snaps,sv.artCols,rid);renderSol(res,rid);
+  }else if(p==='gr'){
+    const sv=new GraphicalSolver(c,A,b,types,isMax);
+    const res=sv.solve();Object.assign(res,{A,b,types,c,isMax});
+    renderChart(res,rid);
+  }else if(p==='d'){
+    const sv=new SimplexSolver(c,A,b,isMax);const res=sv.solve();
+    renderDual(res,inp,rid);
+  }
+
+  div.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// Init
+document.addEventListener('DOMContentLoaded',()=>{
+  gen('s');gen('g');gen('gr');gen('d');
+});
+</script>
+</body>
+</html>
