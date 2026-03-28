@@ -855,6 +855,38 @@ function renderDual(primalRes,primalInputs,cid){
     hdr.addEventListener('click',()=>{body.classList.toggle('col');hdr.querySelector('.chv').classList.toggle('open');});
   });
 
+  // Dual tableaux (BigM iterations)
+  if(dualRes.snaps&&dualRes.snaps.length>0){
+    const dt=document.createElement('div');dt.className='card';
+    dt.innerHTML='<div class="card-title" style="color:#c084fc">Solución del Dual — Iteraciones Simplex (Big M)</div>';
+    div.appendChild(dt);
+    dualRes.snaps.forEach((s,idx)=>{
+      const blk=document.createElement('div');blk.className='iter-block';
+      const hdr=document.createElement('div');hdr.className='iter-hdr';
+      hdr.style.borderLeft='3px solid rgba(168,85,247,0.6)';
+      hdr.innerHTML=`<h3 style="color:#c084fc">${s.lbl}</h3><div style="display:flex;align-items:center;gap:.6rem">
+        ${s.pc>=0?`<span class="iter-info" style="background:rgba(168,85,247,0.15);color:#c084fc">Pivote (${s.pr+1},${s.pc+1})</span>`:''}
+        <span class="chv open">&#9660;</span></div>`;
+      const body=document.createElement('div');body.className='iter-body';
+      const scroll=document.createElement('div');scroll.className='tscroll';
+      const tbl=document.createElement('table');tbl.className='st';
+      const thead=document.createElement('thead');
+      const hr=document.createElement('tr');hr.innerHTML='<th>Base</th>';
+      s.vn.forEach((nm,j)=>{const th=document.createElement('th');th.textContent=nm;if(j===s.pc)th.style.background='rgba(168,85,247,0.15)';hr.appendChild(th);});
+      hr.innerHTML+='<th>RHS</th>';thead.appendChild(hr);tbl.appendChild(thead);
+      const tbody=document.createElement('tbody');
+      s.T.forEach((row,i)=>{
+        const tr=document.createElement('tr');if(i===s.pr)tr.classList.add('pr');
+        const bth=document.createElement('th');bth.className='bc';bth.textContent=i===s.T.length-1?'W':s.vn[s.basis[i]]||'?';tr.appendChild(bth);
+        row.forEach((v,j)=>{if(j>s.ri)return;const td=document.createElement('td');td.textContent=j<s.vn.length?fmtC(v):fmtN(v);if(i===s.pr&&j===s.pc)td.classList.add('pc');else if(j===s.pc)td.classList.add('pcol');tr.appendChild(td);});
+        tbody.appendChild(tr);
+      });
+      tbl.appendChild(tbody);scroll.appendChild(tbl);body.appendChild(scroll);
+      blk.appendChild(hdr);blk.appendChild(body);dt.appendChild(blk);
+      hdr.addEventListener('click',()=>{body.classList.toggle('col');hdr.querySelector('.chv').classList.toggle('open');});
+    });
+  }
+
   // Results
   const resCard=document.createElement('div');resCard.className='card';
   const dualOK=dualRes.status==='optimal';
