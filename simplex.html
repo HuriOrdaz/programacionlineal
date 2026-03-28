@@ -797,9 +797,13 @@ function renderDual(primalRes,primalInputs,cid){
   const dualB=c.slice();  // dual RHS = primal c
   const dualTypes=new Array(n).fill('>=');
 
-  // Solve dual with BigM (min b'y, A'y >= c, y >= 0 → use BigM min)
-  const dualSolver=new BigMSolver(dualC,dualA,dualB,dualTypes,false);
+  // Solve dual: min b'y, A'y >= c, y >= 0
+  // Convert to max: max -b'y (BigMSolver works correctly for max with >= constraints)
+  const negDualC=dualC.map(v=>-v);
+  const dualSolver=new BigMSolver(negDualC,dualA,dualB,dualTypes,true);
   const dualRes=dualSolver.solve();
+  // Restore original sign: W* = -(max of -W)
+  if(dualRes.status==='optimal')dualRes.Z=-dualRes.Z;
 
   // Format primal problem text
   const primalStr=`Max Z = ${c.map((ci,j)=>`${fmtN(ci)}x${j+1}`).join(' + ')}\n`+
@@ -932,6 +936,9 @@ function renderDual(primalRes,primalInputs,cid){
       </table>
     </div>`;
   div.appendChild(resCard);
+
+  // Final solution box (same as regular Simplex)
+  renderSol(primalRes,cid);
 }
 
 // ─────────────────────────────────────────
