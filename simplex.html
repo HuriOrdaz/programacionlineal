@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Programación Lineal</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -124,6 +124,24 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
   .nav-btn.active{border-bottom-color:var(--accent);border-left-color:transparent}
   .dual-grid{grid-template-columns:1fr}
 }
+/* ── INFO MODAL ── */
+.info-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;display:none;align-items:center;justify-content:center}
+.info-overlay.open{display:flex}
+.info-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;max-width:580px;width:92%;max-height:82vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.info-modal h2{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:1rem;padding-right:2rem}
+.info-modal p{font-size:0.855rem;color:var(--muted);line-height:1.8;margin-bottom:.7rem}
+.info-modal ul{padding-left:1.3rem;margin:.4rem 0 .8rem}
+.info-modal li{font-size:0.84rem;color:var(--muted);line-height:1.75;margin-bottom:.25rem}
+.info-modal strong{color:var(--text)}
+.info-close{position:absolute;top:.9rem;right:.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;padding:4px 10px;font-size:0.85rem;line-height:1}
+.info-close:hover{color:var(--text)}
+.info-btn{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:6px;color:var(--accent2);cursor:pointer;font-size:0.82rem;padding:3px 9px;flex-shrink:0;transition:background .15s;margin-left:.5rem}
+.info-btn:hover{background:rgba(59,130,246,0.22)}
+/* ── NC COUNTER ── */
+.nc-counter{display:flex;align-items:center;gap:.3rem}
+.nc-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:1.05rem;width:28px;height:28px;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .15s}
+.nc-btn:hover{background:var(--border)}
+.nc-val{min-width:26px;text-align:center;font-size:.9rem;font-weight:700;color:var(--text)}
 </style>
 </head>
 <body>
@@ -183,6 +201,16 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
       </svg>
       Primal-Dual
     </button>
+
+    <button class="nav-btn" onclick="switchTab('dosfases',this)">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <circle cx="6" cy="10" r="3.5" stroke="#60a5fa" stroke-width="1.6" fill="none"/>
+        <circle cx="14" cy="10" r="3.5" stroke="#a78bfa" stroke-width="1.6" fill="none"/>
+        <text x="4.5" y="13" font-size="6" fill="#60a5fa" font-weight="bold">1</text>
+        <text x="12.5" y="13" font-size="6" fill="#a78bfa" font-weight="bold">2</text>
+      </svg>
+      Dos Fases
+    </button>
   </nav>
 
   <div class="content">
@@ -199,8 +227,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
           <rect x="8" y="36" width="44" height="10" rx="2" fill="rgba(234,179,8,0.2)" stroke="#f59e0b" stroke-width="1.2"/>
           <path d="M22 36 L30 22 L38 36" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
-        <div>
-          <h2>Método Simplex</h2>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center">
+            <h2>Método Simplex</h2>
+            <button class="info-btn" onclick="showInfo('simplex')">ⓘ</button>
+          </div>
           <p>Resuelve problemas con restricciones ≤. Muestra cada iteración de la tabla con el elemento pivote resaltado. Acepta fracciones como 1/2, 3/4.</p>
         </div>
       </div>
@@ -213,9 +244,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
             </select>
           </div>
           <div class="cfg"><label>Restricciones:</label>
-            <select id="s-nc" onchange="gen('s')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <div class="nc-counter">
+              <button type="button" class="nc-btn" onclick="ncChange('s',-1)">−</button>
+              <span class="nc-val" id="s-nc">2</span>
+              <button type="button" class="nc-btn" onclick="ncChange('s',1)">+</button>
+            </div>
           </div>
           <div class="cfg"><label>Objetivo:</label>
             <div class="radio-grp">
@@ -246,8 +279,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
           <text x="44" y="20" font-size="10" fill="#f97316" font-family="serif" font-style="italic">M</text>
           <line x1="8" y1="52" x2="52" y2="52" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2" opacity="0.4"/>
         </svg>
-        <div>
-          <h2>Método Gran M (Big M)</h2>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center">
+            <h2>Método Gran M (Big M)</h2>
+            <button class="info-btn" onclick="showInfo('granm')">ⓘ</button>
+          </div>
           <p>Maneja restricciones ≤, ≥ e =. Agrega variables artificiales con penalidad M para garantizar factibilidad. Las columnas artificiales se destacan en naranja.</p>
         </div>
       </div>
@@ -260,9 +296,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
             </select>
           </div>
           <div class="cfg"><label>Restricciones:</label>
-            <select id="g-nc" onchange="gen('g')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <div class="nc-counter">
+              <button type="button" class="nc-btn" onclick="ncChange('g',-1)">−</button>
+              <span class="nc-val" id="g-nc">2</span>
+              <button type="button" class="nc-btn" onclick="ncChange('g',1)">+</button>
+            </div>
           </div>
           <div class="cfg"><label>Objetivo:</label>
             <div class="radio-grp">
@@ -295,9 +333,12 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
           <line x1="28" y1="50" x2="44" y2="18" stroke="#a78bfa" stroke-width="1.4" stroke-linecap="round"/>
           <circle cx="28" cy="34" r="3.5" fill="#ef4444"/>
         </svg>
-        <div>
-          <h2>Método Gráfico</h2>
-          <p>Grafica la región factible para problemas con 2 variables. Identifica todos los puntos esquina, evalúa la función objetivo y señala el óptimo.</p>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center">
+            <h2>Método Gráfico</h2>
+            <button class="info-btn" onclick="showInfo('grafico')">ⓘ</button>
+          </div>
+          <p>Visualización 3D interactiva de la región factible. El eje Z muestra el valor de la función objetivo. Arrastra para rotar, scroll para zoom.</p>
         </div>
       </div>
       <div class="card">
@@ -305,9 +346,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
         <div class="config-row">
           <div class="cfg"><label>Variables:</label><span style="font-size:0.85rem;font-weight:700;color:var(--accent2)">2 (fijo)</span></div>
           <div class="cfg"><label>Restricciones:</label>
-            <select id="gr-nc" onchange="gen('gr')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <div class="nc-counter">
+              <button type="button" class="nc-btn" onclick="ncChange('gr',-1)">−</button>
+              <span class="nc-val" id="gr-nc">2</span>
+              <button type="button" class="nc-btn" onclick="ncChange('gr',1)">+</button>
+            </div>
           </div>
           <div class="cfg"><label>Objetivo:</label>
             <div class="radio-grp">
@@ -340,8 +383,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
           <path d="M28 21 Q35 21 35 32" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="3,2" fill="none"/>
           <path d="M32 39 Q25 39 25 28" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="3,2" fill="none"/>
         </svg>
-        <div>
-          <h2>Método Primal-Dual</h2>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center">
+            <h2>Método Primal-Dual</h2>
+            <button class="info-btn" onclick="showInfo('dual')">ⓘ</button>
+          </div>
           <p>Construye automáticamente el problema dual. Resuelve ambos con Simplex y verifica el Teorema de Dualidad Fuerte: Z* = W*. Muestra precios sombra y holguras complementarias.</p>
         </div>
       </div>
@@ -354,9 +400,11 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
             </select>
           </div>
           <div class="cfg"><label>Restricciones:</label>
-            <select id="d-nc" onchange="gen('d')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <div class="nc-counter">
+              <button type="button" class="nc-btn" onclick="ncChange('d',-1)">−</button>
+              <span class="nc-val" id="d-nc">2</span>
+              <button type="button" class="nc-btn" onclick="ncChange('d',1)">+</button>
+            </div>
           </div>
           <div class="cfg"><label>Objetivo:</label>
             <div class="radio-grp">
@@ -377,8 +425,70 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
       <div id="d-res"></div>
     </div>
 
+    <!-- ══ DOS FASES ══ -->
+    <div id="tab-dosfases" class="panel">
+      <div class="method-hero">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <rect width="60" height="60" rx="12" fill="rgba(167,139,250,0.08)"/>
+          <circle cx="20" cy="30" r="12" stroke="#3b82f6" stroke-width="1.6" fill="rgba(59,130,246,0.12)"/>
+          <text x="15" y="34" font-size="10" fill="#60a5fa" font-weight="bold">F1</text>
+          <circle cx="40" cy="30" r="12" stroke="#a78bfa" stroke-width="1.6" fill="rgba(167,139,250,0.12)"/>
+          <text x="35" y="34" font-size="10" fill="#c084fc" font-weight="bold">F2</text>
+          <line x1="28" y1="30" x2="28" y2="30" stroke="#94a3b8" stroke-width="1"/>
+        </svg>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center">
+            <h2>Método de Dos Fases</h2>
+            <button class="info-btn" onclick="showInfo('dosfases')">ⓘ</button>
+          </div>
+          <p>Fase 1: minimiza la suma de variables artificiales para encontrar una solución básica factible. Fase 2: optimiza el objetivo original desde esa base.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Configuración</div>
+        <div class="config-row">
+          <div class="cfg"><label>Variables:</label>
+            <select id="df-nv" onchange="gen('df')">
+              <option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+          <div class="cfg"><label>Restricciones:</label>
+            <div class="nc-counter">
+              <button type="button" class="nc-btn" onclick="ncChange('df',-1)">−</button>
+              <span class="nc-val" id="df-nc">2</span>
+              <button type="button" class="nc-btn" onclick="ncChange('df',1)">+</button>
+            </div>
+          </div>
+          <div class="cfg"><label>Objetivo:</label>
+            <div class="radio-grp">
+              <label class="rlbl sel" id="df-ml"><input type="radio" name="df-o" value="max" checked onchange="upR('df')"> Max</label>
+              <label class="rlbl" id="df-nl"><input type="radio" name="df-o" value="min" onchange="upR('df')"> Min</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="df-ic" style="display:none">
+        <div class="card-title">Función Objetivo</div>
+        <div class="obj-row" id="df-or"></div>
+        <div class="card-title" style="margin-top:1rem">Restricciones · Operadores: ≤, ≥, =</div>
+        <div id="df-cr"></div>
+        <p class="hint">Fracciones permitidas: 1/2, 3/4 · Usa ≥ o = para activar las variables artificiales</p>
+        <button class="btn btn-solve" onclick="solve('df')">Resolver (Dos Fases)</button>
+      </div>
+      <div id="df-res"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /layout -->
+
+<!-- ══ INFO MODAL ══ -->
+<div class="info-overlay" id="info-overlay" onclick="closeInfo(event)">
+  <div class="info-modal" onclick="event.stopPropagation()">
+    <button class="info-close" onclick="closeInfo()">✕</button>
+    <h2 id="info-title"></h2>
+    <div id="info-body"></div>
+  </div>
+</div>
 
 <script>
 // ─────────────────────────────────────────
@@ -689,74 +799,105 @@ function renderSol(res,cid){
   box.appendChild(vals);div.appendChild(box);
 }
 
-let chartInst=null;
 function renderChart(res,cid){
   const div=document.getElementById(cid);
   if(res.status==='infeasible'){div.innerHTML=`<div class="err">No existe región factible.</div>`;return;}
   const{feas,opt,hull,A,b,types,c}=res;
   let mx=0;b.forEach(v=>{if(v>mx)mx=v;});
   feas.forEach(p=>{if(p.x>mx)mx=p.x;if(p.y>mx)mx=p.y;});
-  // Zoom in: pad only 40% beyond the furthest feasible point, min scale of 2
-  const pm=Math.max(mx*1.4, opt.x*1.8, opt.y*1.8, 2);
+  const pm=Math.max(mx*1.4,opt.x*1.8,opt.y*1.8,2);
   const COLS=['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6'];
-  const ds=[];
+  const traces=[];
+
+  // Objective function surface (tilted plane Z = c1*x1 + c2*x2)
+  const steps=20;
+  const gx=Array.from({length:steps+1},(_,i)=>pm*i/steps);
+  const gy=Array.from({length:steps+1},(_,i)=>pm*i/steps);
+  const gz=gy.map(yi=>gx.map(xi=>c[0]*xi+c[1]*yi));
+  traces.push({
+    type:'surface',x:gx,y:gy,z:gz,
+    name:'Plano Z=f(x₁,x₂)',opacity:0.18,
+    colorscale:[[0,'#1e3a5f'],[0.5,'#1e4d8c'],[1,'#22c55e']],
+    showscale:false,hoverinfo:'skip'
+  });
+
+  // Constraint boundary lines in 3D
   A.forEach((row,i)=>{
-    const pts=[];const a1=row[0],a2=row[1],bi=b[i];
-    if(Math.abs(a2)>EPS){pts.push({x:0,y:bi/a2});pts.push({x:pm,y:(bi-a1*pm)/a2});}
-    else if(Math.abs(a1)>EPS){const xi=bi/a1;pts.push({x:xi,y:0});pts.push({x:xi,y:pm});}
-    ds.push({label:`R${i+1}: ${fmtC(a1)}x₁+${fmtC(a2)}x₂${types[i]}${fmtN(bi)}`,
-      data:pts,type:'line',borderColor:COLS[i%COLS.length],borderWidth:2,pointRadius:0,fill:false,tension:0});
-  });
-  if(hull.length>=3){
-    const poly=[...hull.map(p=>({x:p.x,y:p.y})),{x:hull[0].x,y:hull[0].y}];
-    ds.push({label:'Región factible',data:poly,type:'line',
-      borderColor:'rgba(34,197,94,0.4)',backgroundColor:'rgba(34,197,94,0.12)',
-      fill:true,tension:0,pointRadius:0,borderWidth:1.5});
-  }
-  ds.push({label:'Puntos esquina',data:feas.map(p=>({x:p.x,y:p.y})),
-    type:'scatter',radius:7,backgroundColor:'#3b82f6',borderColor:'#1d4ed8',borderWidth:2});
-  ds.push({label:`Óptimo (${fmtN(opt.x)},${fmtN(opt.y)})`,data:[{x:opt.x,y:opt.y}],
-    type:'scatter',pointStyle:'star',radius:14,backgroundColor:'#ef4444',borderColor:'#dc2626',borderWidth:2});
-
-  const lblPlugin={id:'cl',afterDatasetsDraw(ch){
-    const ctx=ch.ctx;const meta=ch.getDatasetMeta(ds.length-2);
-    ctx.save();
-    meta.data.forEach((pt,i)=>{
-      const d=feas[i];
-      ctx.font='bold 11px sans-serif';ctx.fillStyle='#e2e8f0';ctx.textAlign='center';
-      ctx.fillText(`(${fmtN(d.x)},${fmtN(d.y)})`,pt.x,pt.y-14);
-      ctx.font='10px sans-serif';ctx.fillStyle='#94a3b8';
-      ctx.fillText(`Z=${fmtN(d.Z)}`,pt.x,pt.y-3);
-    });
-    ctx.restore();
-  }};
-
-  const cw=document.createElement('div');cw.className='card';
-  cw.innerHTML=`<div class="card-title">Región Factible</div><div class="chart-wrap"><canvas id="lpc"></canvas></div>`;
-  div.appendChild(cw);
-  if(chartInst){chartInst.destroy();chartInst=null;}
-  chartInst=new Chart(cw.querySelector('#lpc'),{
-    type:'scatter',data:{datasets:ds},plugins:[lblPlugin],
-    options:{
-      scales:{
-        x:{min:0,max:pm,grid:{color:'rgba(255,255,255,0.05)'},
-          title:{display:true,text:'x₁',color:'#94a3b8',font:{weight:'bold'}},
-          ticks:{color:'#94a3b8'}},
-        y:{min:0,max:pm,grid:{color:'rgba(255,255,255,0.05)'},
-          title:{display:true,text:'x₂',color:'#94a3b8',font:{weight:'bold'}},
-          ticks:{color:'#94a3b8'}}
-      },
-      plugins:{
-        legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},boxWidth:14}},
-        tooltip:{callbacks:{label:ctx=>{
-          if(ctx.datasetIndex===ds.length-2){const d=feas[ctx.dataIndex];return`(${fmtN(d.x)},${fmtN(d.y)}) Z=${fmtN(d.Z)}`;}
-          if(ctx.datasetIndex===ds.length-1)return`Óptimo: Z=${fmtN(opt.Z)}`;
-          return`(${fmtN(ctx.parsed.x)},${fmtN(ctx.parsed.y)})`;
-        }}}
-      }
+    const a1=row[0],a2=row[1],bi=b[i];
+    let pts=[];
+    const N=40;
+    if(Math.abs(a2)>EPS){
+      for(let k=0;k<=N;k++){const xi=pm*k/N;pts.push({x:xi,y:(bi-a1*xi)/a2});}
+    }else if(Math.abs(a1)>EPS){
+      const xi=bi/a1;for(let k=0;k<=N;k++)pts.push({x:xi,y:pm*k/N});
     }
+    pts=pts.filter(p=>p.x>=-EPS&&p.y>=-EPS&&p.x<=pm*1.05&&p.y<=pm*1.05);
+    if(!pts.length)return;
+    traces.push({
+      type:'scatter3d',mode:'lines',
+      x:pts.map(p=>p.x),y:pts.map(p=>p.y),z:pts.map(p=>c[0]*p.x+c[1]*p.y),
+      name:`R${i+1}: ${fmtN(a1)}x₁+${fmtN(a2)}x₂${types[i]}${fmtN(bi)}`,
+      line:{color:COLS[i%COLS.length],width:4},
+      hovertemplate:`R${i+1}<extra></extra>`
+    });
   });
 
+  // Feasible region outline
+  if(hull.length>=2){
+    const hc=[...hull,hull[0]];
+    traces.push({
+      type:'scatter3d',mode:'lines',
+      x:hc.map(p=>p.x),y:hc.map(p=>p.y),z:hc.map(p=>c[0]*p.x+c[1]*p.y),
+      name:'Región factible',
+      line:{color:'rgba(34,197,94,0.9)',width:6},
+      hoverinfo:'skip'
+    });
+  }
+
+  // Corner points
+  traces.push({
+    type:'scatter3d',mode:'markers+text',
+    x:feas.map(p=>p.x),y:feas.map(p=>p.y),z:feas.map(p=>p.Z),
+    name:'Puntos esquina',
+    marker:{color:'#3b82f6',size:7,line:{color:'#fff',width:1}},
+    text:feas.map((p,i)=>`P${i+1}(${fmtN(p.x)},${fmtN(p.y)})<br>Z=${fmtN(p.Z)}`),
+    textposition:'top center',
+    textfont:{color:'#e2e8f0',size:10}
+  });
+
+  // Optimal point
+  traces.push({
+    type:'scatter3d',mode:'markers+text',
+    x:[opt.x],y:[opt.y],z:[opt.Z],
+    name:`★ Óptimo Z=${fmtN(opt.Z)}`,
+    marker:{color:'#ef4444',size:13,symbol:'diamond',line:{color:'#fff',width:2}},
+    text:[`Z*=${fmtN(opt.Z)}`],textposition:'top center',
+    textfont:{color:'#ef4444',size:12}
+  });
+
+  const plotId='lpc3d_'+Date.now();
+  const cw=document.createElement('div');cw.className='card';
+  cw.innerHTML=`<div class="card-title">Región Factible — Vista 3D interactiva · Arrastra para rotar · Scroll para zoom</div>
+    <div id="${plotId}" style="height:520px;border-radius:8px;overflow:hidden"></div>`;
+  div.appendChild(cw);
+
+  Plotly.newPlot(document.getElementById(plotId),traces,{
+    paper_bgcolor:'#0d0d14',
+    scene:{
+      xaxis:{title:{text:'x₁',font:{color:'#94a3b8'}},gridcolor:'rgba(255,255,255,0.07)',
+        zerolinecolor:'#3b82f6',tickfont:{color:'#94a3b8'},backgroundcolor:'#13131f',showbackground:true},
+      yaxis:{title:{text:'x₂',font:{color:'#94a3b8'}},gridcolor:'rgba(255,255,255,0.07)',
+        zerolinecolor:'#3b82f6',tickfont:{color:'#94a3b8'},backgroundcolor:'#13131f',showbackground:true},
+      zaxis:{title:{text:'Z',font:{color:'#94a3b8'}},gridcolor:'rgba(255,255,255,0.07)',
+        zerolinecolor:'#22c55e',tickfont:{color:'#94a3b8'},backgroundcolor:'#0d0d14',showbackground:true},
+      camera:{eye:{x:1.6,y:1.6,z:1.3}}
+    },
+    legend:{font:{color:'#94a3b8',size:11},bgcolor:'rgba(19,19,31,0.85)',
+      bordercolor:'#252540',borderwidth:1},
+    margin:{l:0,r:0,t:10,b:0}
+  },{responsive:true,displaylogo:false});
+
+  // Corner points table
   const tw=document.createElement('div');tw.className='card';
   tw.innerHTML=`<div class="card-title">Puntos Esquina</div>`;
   const tbl=document.createElement('table');tbl.className='ct';
@@ -770,13 +911,11 @@ function renderChart(res,cid){
     tb.appendChild(tr);
   });
   tbl.appendChild(tb);tw.appendChild(tbl);
-
   const sb=document.createElement('div');sb.className='card sol-box';
   sb.innerHTML=`<h3>Solución Óptima</h3><div class="sol-vals">
     <div class="sc">x₁ = ${fmtN(opt.x)}</div>
     <div class="sc">x₂ = ${fmtN(opt.y)}</div>
     <div class="sc scz">Z = ${fmtN(opt.Z)}</div></div>`;
-
   div.appendChild(tw);div.appendChild(sb);
 }
 
@@ -830,8 +969,6 @@ function renderDual(primalRes,primalInputs,cid){
   const pt=document.createElement('div');pt.className='card';
   pt.innerHTML='<div class="card-title">Solución del Primal — Iteraciones</div>';
   div.appendChild(pt);
-  renderTableaux(primalRes.snaps,[],pt.id||'pt-inner');
-  // Append tableaux directly
   primalRes.snaps.forEach((s,idx)=>{
     const isLast=idx===primalRes.snaps.length-1;
     const collapsed=false;
@@ -942,6 +1079,295 @@ function renderDual(primalRes,primalInputs,cid){
 }
 
 // ─────────────────────────────────────────
+//  TwoPhaseSolver
+// ─────────────────────────────────────────
+class TwoPhaseSolver{
+  constructor(c,A,b,types,isMax){
+    this.c=c;this.A=A;this.b=b;this.types=types;this.isMax=isMax;
+    this.n=c.length;this.m=b.length;
+    this.p1snaps=[];this.p2snaps=[];this.artCols=[];
+  }
+  _snap(arr,lbl,T,basis,vn,pr,pc,ri){
+    arr.push({lbl,T:dc2d(T),basis:basis.slice(),vn:vn.slice(),pr,pc,ri});
+  }
+  _pivot(T,m,pr,pc){
+    const pv=T[pr][pc];const tc=T[0].length;
+    for(let j=0;j<tc;j++)T[pr][j]/=pv;
+    for(let i=0;i<=m;i++){
+      if(i===pr)continue;const f=T[i][pc];if(Math.abs(f)<EPS)continue;
+      for(let j=0;j<tc;j++)T[i][j]-=f*T[pr][j];
+    }
+  }
+  solve(){
+    const{n,m}=this;let ptr=n;const info=[];let artIdx=0;
+    const vn=[];
+    for(let j=0;j<n;j++)vn.push('x'+(j+1));
+    this.types.forEach(t=>{
+      const inf={};
+      if(t==='<='){inf.slack=ptr++;vn.push('s'+(ptr-n));}
+      else if(t==='>='){
+        inf.surplus=ptr++;vn.push('e'+(ptr-n));
+        inf.art=ptr++;artIdx++;vn.push('a'+artIdx);this.artCols.push(ptr-1);
+      }else{
+        inf.art=ptr++;artIdx++;vn.push('a'+artIdx);this.artCols.push(ptr-1);
+      }
+      info.push(inf);
+    });
+    const tc=ptr+1;const ri=ptr;
+    const T=[];const basis=[];
+    for(let i=0;i<m;i++){
+      const row=new Array(tc).fill(0);
+      for(let j=0;j<n;j++)row[j]=this.A[i][j];
+      const inf=info[i];
+      if(inf.slack!==undefined){row[inf.slack]=1;basis.push(inf.slack);}
+      if(inf.surplus!==undefined)row[inf.surplus]=-1;
+      if(inf.art!==undefined){row[inf.art]=1;if(inf.slack===undefined)basis.push(inf.art);}
+      row[ri]=this.b[i];T.push(row);
+    }
+    // If no artificials needed (all <=), skip phase 1
+    if(this.artCols.length===0){
+      const obj=new Array(tc).fill(0);
+      const sg=this.isMax?-1:1;
+      for(let j=0;j<n;j++)obj[j]=sg*this.c[j];
+      T.push(obj);
+      this._snap(this.p1snaps,'Sin artificiales — BFS directa',T,basis,vn,-1,-1,ri);
+      this.p2snaps=this.p1snaps;
+      // Run simplex directly
+      for(let it=1;it<=MAXIT;it++){
+        const obj2=T[m];let mv=-EPS,pc=-1;
+        for(let j=0;j<ri;j++)if(obj2[j]<mv){mv=obj2[j];pc=j;}
+        if(pc===-1)break;
+        let mr=Infinity,pr=-1;
+        for(let i=0;i<m;i++){const e=T[i][pc];if(e>EPS){const r=T[i][ri]/e;if(r<mr-EPS||(Math.abs(r-mr)<EPS&&(pr===-1||basis[i]<basis[pr]))){mr=r;pr=i;}}}
+        if(pr===-1)return{status:'unbounded',p1snaps:this.p1snaps,p2snaps:[]};
+        const en=vn[pc],lv=vn[basis[pr]];this._pivot(T,m,pr,pc);basis[pr]=pc;
+        this._snap(this.p2snaps,`Iter ${it} — Entra: ${en}, Sale: ${lv}`,T,basis,vn,pr,pc,ri);
+      }
+      const sol=new Array(n).fill(0);
+      for(let i=0;i<m;i++)if(basis[i]<n)sol[basis[i]]=T[i][ri];
+      const rawZ=T[m][ri];const Z=this.isMax?rawZ:-rawZ;
+      return{status:'optimal',p1snaps:this.p1snaps,p2snaps:this.p2snaps,sol,Z,n};
+    }
+    // ── PHASE 1: minimize sum(artificials) ──
+    const p1obj=new Array(tc).fill(0);
+    this.artCols.forEach(col=>p1obj[col]=1);
+    // Eliminate artificials in basis from obj row
+    for(let i=0;i<m;i++){
+      if(info[i].art!==undefined&&basis[i]===info[i].art){
+        const f=p1obj[info[i].art];
+        if(Math.abs(f)>EPS)for(let j=0;j<tc;j++)p1obj[j]-=f*T[i][j];
+      }
+    }
+    T.push(p1obj);
+    this._snap(this.p1snaps,'Fase 1 — Tableau Inicial',T,basis,vn,-1,-1,ri);
+    for(let it=1;it<=MAXIT;it++){
+      const obj=T[m];let mv=-EPS,pc=-1;
+      for(let j=0;j<ri;j++)if(obj[j]<mv){mv=obj[j];pc=j;}
+      if(pc===-1)break;
+      let mr=Infinity,pr=-1;
+      for(let i=0;i<m;i++){const e=T[i][pc];if(e>EPS){const r=T[i][ri]/e;if(r<mr-EPS||(Math.abs(r-mr)<EPS&&(pr===-1||basis[i]<basis[pr]))){mr=r;pr=i;}}}
+      if(pr===-1)return{status:'unbounded',p1snaps:this.p1snaps,p2snaps:[]};
+      const en=vn[pc],lv=vn[basis[pr]];this._pivot(T,m,pr,pc);basis[pr]=pc;
+      this._snap(this.p1snaps,`F1-Iter ${it} — Entra: ${en}, Sale: ${lv}`,T,basis,vn,pr,pc,ri);
+    }
+    // Check feasibility: T[m][ri] ≈ 0 means phase 1 obj = 0 (feasible)
+    if(T[m][ri]<-1e-5){
+      return{status:'infeasible',p1snaps:this.p1snaps,p2snaps:[]};
+    }
+    // ── PHASE 2: optimize original objective ──
+    T.pop();
+    const sg=this.isMax?-1:1;
+    const p2obj=new Array(tc).fill(0);
+    for(let j=0;j<n;j++)p2obj[j]=sg*this.c[j];
+    // Eliminate current basis variables from phase 2 obj row
+    for(let i=0;i<m;i++){
+      const bj=basis[i];const f=p2obj[bj];
+      if(Math.abs(f)>EPS)for(let j=0;j<tc;j++)p2obj[j]-=f*T[i][j];
+    }
+    T.push(p2obj);
+    this._snap(this.p2snaps,'Fase 2 — Tableau Inicial',T,basis,vn,-1,-1,ri);
+    for(let it=1;it<=MAXIT;it++){
+      const obj=T[m];let mv=-EPS,pc=-1;
+      for(let j=0;j<ri;j++)if(obj[j]<mv){mv=obj[j];pc=j;}
+      if(pc===-1)break;
+      let mr=Infinity,pr=-1;
+      for(let i=0;i<m;i++){const e=T[i][pc];if(e>EPS){const r=T[i][ri]/e;if(r<mr-EPS||(Math.abs(r-mr)<EPS&&(pr===-1||basis[i]<basis[pr]))){mr=r;pr=i;}}}
+      if(pr===-1)return{status:'unbounded',p1snaps:this.p1snaps,p2snaps:this.p2snaps};
+      const en=vn[pc],lv=vn[basis[pr]];this._pivot(T,m,pr,pc);basis[pr]=pc;
+      this._snap(this.p2snaps,`F2-Iter ${it} — Entra: ${en}, Sale: ${lv}`,T,basis,vn,pr,pc,ri);
+    }
+    const sol=new Array(n).fill(0);
+    for(let i=0;i<m;i++)if(basis[i]<n)sol[basis[i]]=T[i][ri];
+    const rawZ=T[m][ri];const Z=this.isMax?rawZ:-rawZ;
+    return{status:'optimal',p1snaps:this.p1snaps,p2snaps:this.p2snaps,sol,Z,n};
+  }
+}
+
+// ─────────────────────────────────────────
+//  renderTwoPhase
+// ─────────────────────────────────────────
+function renderTwoPhase(res,inp,cid){
+  const div=document.getElementById(cid);
+  if(res.status==='infeasible'){
+    div.innerHTML=`<div class="err">&#9888; Infactible: la Fase 1 no pudo eliminar todas las variables artificiales (la solución básica factible no existe).</div>`;
+    if(res.p1snaps&&res.p1snaps.length){
+      const c1=document.createElement('div');c1.className='card';
+      c1.innerHTML='<div class="card-title" style="color:#f59e0b">Fase 1 — Iteraciones (problema infactible)</div>';
+      div.appendChild(c1);renderTableaux(res.p1snaps,[],cid);
+    }
+    return;
+  }
+  if(res.status==='unbounded'){div.innerHTML=`<div class="err">El problema no está acotado.</div>`;return;}
+  // Phase 1 card
+  const p1card=document.createElement('div');p1card.className='card';
+  p1card.innerHTML='<div class="card-title" style="color:#f59e0b">Fase 1 — Minimización de Variables Artificiales</div>';
+  div.appendChild(p1card);
+  (res.p1snaps||[]).forEach(s=>{
+    const blk=document.createElement('div');blk.className='iter-block';
+    const hdr=document.createElement('div');hdr.className='iter-hdr';
+    hdr.style.borderLeft='3px solid rgba(245,158,11,0.7)';
+    hdr.innerHTML=`<h3 style="color:#fbbf24">${s.lbl}</h3><div style="display:flex;align-items:center;gap:.6rem">
+      ${s.pc>=0?`<span class="iter-info" style="background:rgba(245,158,11,0.12);color:#fbbf24">Pivote (${s.pr+1},${s.pc+1})</span>`:''}
+      <span class="chv open">&#9660;</span></div>`;
+    const body=document.createElement('div');body.className='iter-body';
+    const scroll=document.createElement('div');scroll.className='tscroll';
+    const tbl=document.createElement('table');tbl.className='st';
+    const thead=document.createElement('thead');
+    const hr=document.createElement('tr');hr.innerHTML='<th>Base</th>';
+    s.vn.forEach((nm,j)=>{const th=document.createElement('th');th.textContent=nm;if(j===s.pc)th.style.background='rgba(245,158,11,0.12)';hr.appendChild(th);});
+    hr.innerHTML+='<th>RHS</th>';thead.appendChild(hr);tbl.appendChild(thead);
+    const tbody=document.createElement('tbody');
+    s.T.forEach((row,i)=>{
+      const tr=document.createElement('tr');if(i===s.pr)tr.classList.add('pr');
+      const bth=document.createElement('th');bth.className='bc';bth.textContent=i===s.T.length-1?'w':s.vn[s.basis[i]]||'?';tr.appendChild(bth);
+      row.forEach((v,j)=>{if(j>s.ri)return;const td=document.createElement('td');td.textContent=j<s.vn.length?fmtC(v):fmtN(v);if(i===s.pr&&j===s.pc)td.classList.add('pc');else if(j===s.pc)td.classList.add('pcol');tr.appendChild(td);});
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);scroll.appendChild(tbl);body.appendChild(scroll);
+    blk.appendChild(hdr);blk.appendChild(body);p1card.appendChild(blk);
+    hdr.addEventListener('click',()=>{body.classList.toggle('col');hdr.querySelector('.chv').classList.toggle('open');});
+  });
+  // Phase 2 card
+  const p2card=document.createElement('div');p2card.className='card';
+  p2card.innerHTML='<div class="card-title" style="color:#22c55e">Fase 2 — Optimización del Objetivo Original</div>';
+  div.appendChild(p2card);
+  (res.p2snaps||[]).forEach(s=>{
+    const blk=document.createElement('div');blk.className='iter-block';
+    const hdr=document.createElement('div');hdr.className='iter-hdr';
+    hdr.style.borderLeft='3px solid rgba(34,197,94,0.7)';
+    hdr.innerHTML=`<h3 style="color:#86efac">${s.lbl}</h3><div style="display:flex;align-items:center;gap:.6rem">
+      ${s.pc>=0?`<span class="iter-info" style="background:rgba(34,197,94,0.12);color:#86efac">Pivote (${s.pr+1},${s.pc+1})</span>`:''}
+      <span class="chv open">&#9660;</span></div>`;
+    const body=document.createElement('div');body.className='iter-body';
+    const scroll=document.createElement('div');scroll.className='tscroll';
+    const tbl=document.createElement('table');tbl.className='st';
+    const thead=document.createElement('thead');
+    const hr=document.createElement('tr');hr.innerHTML='<th>Base</th>';
+    s.vn.forEach((nm,j)=>{const th=document.createElement('th');th.textContent=nm;if(j===s.pc)th.style.background='rgba(34,197,94,0.1)';hr.appendChild(th);});
+    hr.innerHTML+='<th>RHS</th>';thead.appendChild(hr);tbl.appendChild(thead);
+    const tbody=document.createElement('tbody');
+    s.T.forEach((row,i)=>{
+      const tr=document.createElement('tr');if(i===s.pr)tr.classList.add('pr');
+      const bth=document.createElement('th');bth.className='bc';bth.textContent=i===s.T.length-1?'Z':s.vn[s.basis[i]]||'?';tr.appendChild(bth);
+      row.forEach((v,j)=>{if(j>s.ri)return;const td=document.createElement('td');td.textContent=j<s.vn.length?fmtC(v):fmtN(v);if(i===s.pr&&j===s.pc)td.classList.add('pc');else if(j===s.pc)td.classList.add('pcol');tr.appendChild(td);});
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);scroll.appendChild(tbl);body.appendChild(scroll);
+    blk.appendChild(hdr);blk.appendChild(body);p2card.appendChild(blk);
+    hdr.addEventListener('click',()=>{body.classList.toggle('col');hdr.querySelector('.chv').classList.toggle('open');});
+  });
+  // Solution box
+  const box=document.createElement('div');box.className='card sol-box';
+  box.innerHTML='<h3>Solución Óptima</h3>';
+  const vals=document.createElement('div');vals.className='sol-vals';
+  for(let j=0;j<res.n;j++){
+    const c=document.createElement('div');c.className='sc';
+    c.textContent=`x${j+1} = ${fmtN(res.sol[j])}`;vals.appendChild(c);
+  }
+  const z=document.createElement('div');z.className='sc scz';
+  z.textContent=`Z = ${fmtN(res.Z)}`;vals.appendChild(z);
+  box.appendChild(vals);div.appendChild(box);
+}
+
+// ─────────────────────────────────────────
+//  INFO MODAL
+// ─────────────────────────────────────────
+const INFO={
+  simplex:{
+    title:'Método Simplex',
+    body:`<p>El <strong>Método Simplex</strong> es un algoritmo iterativo para resolver problemas de programación lineal con restricciones de tipo ≤.</p>
+    <ul>
+      <li><strong>Variables de holgura (s):</strong> Se añaden para convertir las desigualdades en igualdades. Si tienes x₁+x₂≤4, se escribe x₁+x₂+s₁=4.</li>
+      <li><strong>Tableau:</strong> Tabla que organiza los coeficientes del sistema. Cada fila es una restricción; la última fila es la función objetivo (negada para maximización).</li>
+      <li><strong>Pivote:</strong> Celda resaltada en naranja. La columna pivote es la variable que entra a la base (mayor contribución marginal); la fila pivote se elige por el test de razón mínima.</li>
+      <li><strong>Criterio de optimalidad:</strong> Cuando todos los coeficientes de la fila objetivo son ≥ 0, se ha alcanzado el óptimo.</li>
+      <li><strong>Solución:</strong> Los valores de las variables básicas en la columna RHS del tableau final.</li>
+    </ul>`
+  },
+  granm:{
+    title:'Método Gran M (Big M)',
+    body:`<p>Extiende el Simplex para manejar restricciones ≥ e =, donde no hay una base factible obvia.</p>
+    <ul>
+      <li><strong>Variable de excedente (e):</strong> Para ≥, se resta: a₁x₁+a₂x₂-e₁=b. Representa el exceso sobre el límite mínimo.</li>
+      <li><strong>Variable artificial (a):</strong> Variable ficticia añadida para tener una base inicial. Se penaliza con un coeficiente M enorme (M=10⁶) en el objetivo para forzar su salida de la base.</li>
+      <li><strong>Columnas naranjas:</strong> Indican variables artificiales. Si alguna permanece en la base con valor > 0 al final, el problema es infactible.</li>
+      <li><strong>M:</strong> Actúa como penalización infinita. Si una variable artificial entra en la solución óptima, significa que no existe solución factible real.</li>
+      <li><strong>Cuándo usarlo:</strong> Siempre que existan restricciones ≥ o =, o cuando el RHS sea negativo.</li>
+    </ul>`
+  },
+  grafico:{
+    title:'Método Gráfico — Vista 3D',
+    body:`<p>Visualiza el problema de PL de 2 variables en un espacio 3D donde el eje Z representa el valor de la función objetivo.</p>
+    <ul>
+      <li><strong>Plano semitransparente:</strong> Es la función objetivo Z=c₁x₁+c₂x₂. Es un plano inclinado; cada punto del espacio (x₁,x₂) tiene una "altura" Z.</li>
+      <li><strong>Líneas de colores:</strong> Son las restricciones proyectadas en 3D. Cada línea es el límite de una restricción.</li>
+      <li><strong>Contorno verde:</strong> La región factible: el conjunto de todos los puntos que satisfacen todas las restricciones.</li>
+      <li><strong>Puntos esquina (azules):</strong> Vértices de la región factible. El <strong>Teorema Fundamental de la PL</strong> garantiza que si hay óptimo, está en un vértice.</li>
+      <li><strong>Diamante rojo:</strong> El punto óptimo — el vértice donde Z es máximo (o mínimo).</li>
+      <li><strong>Interacción:</strong> Arrastra para rotar la vista 3D y observa cómo el plano objetivo "toca" la región factible en el vértice óptimo.</li>
+    </ul>`
+  },
+  dual:{
+    title:'Método Primal-Dual',
+    body:`<p>Cada problema de PL (primal) tiene asociado un <strong>problema dual</strong> con una relación profunda.</p>
+    <ul>
+      <li><strong>Transformación Primal→Dual:</strong> Si el primal es Max cx, Ax≤b, entonces el dual es Min b'y, A'y≥c, y≥0. Los coeficientes se transponen.</li>
+      <li><strong>Teorema de Dualidad Débil:</strong> Para cualquier solución factible primal x y dual y: cx ≤ b'y. El valor del dual siempre acota al primal.</li>
+      <li><strong>Teorema de Dualidad Fuerte:</strong> En el óptimo, Z* = W*. Los valores óptimos son iguales. Esto verifica que ambas soluciones son realmente óptimas.</li>
+      <li><strong>Precios sombra (y*):</strong> Las variables duales óptimas indican cuánto aumentaría Z* si se relajara la restricción i en una unidad. Son el "valor" de cada restricción.</li>
+      <li><strong>Holguras complementarias:</strong> Si yᵢ > 0, la restricción i es activa (holgura = 0). Si xⱼ > 0, la restricción dual j es activa.</li>
+    </ul>`
+  },
+  dosfases:{
+    title:'Método de Dos Fases',
+    body:`<p>Alternativa al Gran M que evita los problemas numéricos de trabajar con M=10⁶.</p>
+    <ul>
+      <li><strong>¿Cuándo se necesita?</strong> Cuando hay restricciones ≥ o = y no existe una base factible obvia (no hay suficientes variables de holgura para la base inicial).</li>
+      <li><strong>Fase 1 — Minimizar artificiales:</strong> Se construye un problema auxiliar: Min w = suma de variables artificiales. Si el mínimo es 0, se encontró una base factible real. Si es > 0, el problema original es infactible.</li>
+      <li><strong>Fase 2 — Optimizar objetivo:</strong> Con la base factible encontrada en Fase 1, se sustituye el objetivo auxiliar por el original y se continúa el Simplex.</li>
+      <li><strong>Ventaja sobre Gran M:</strong> No requiere elegir M; el método es numéricamente más estable y didácticamente más claro al separar factibilidad de optimalidad.</li>
+      <li><strong>Iteraciones amarillas (F1):</strong> Pertenecen a la Fase 1. Iteraciones verdes (F2): Fase 2 del problema original.</li>
+    </ul>`
+  }
+};
+
+function showInfo(method){
+  const d=INFO[method];if(!d)return;
+  document.getElementById('info-title').textContent=d.title;
+  document.getElementById('info-body').innerHTML=d.body;
+  document.getElementById('info-overlay').classList.add('open');
+}
+function closeInfo(e){
+  if(e&&e.target!==document.getElementById('info-overlay'))return;
+  document.getElementById('info-overlay').classList.remove('open');
+}
+// Allow X button to close
+document.addEventListener('DOMContentLoaded',()=>{
+  const ov=document.getElementById('info-overlay');
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
+});
+
+// ─────────────────────────────────────────
 //  UI CONTROLLER
 // ─────────────────────────────────────────
 function switchTab(name,btn){
@@ -958,7 +1384,16 @@ function upR(p){
 }
 
 function getNV(p){return p==='gr'?2:parseInt(document.getElementById(p+'-nv').value);}
-function getNC(p){return parseInt(document.getElementById(p+'-nc').value);}
+function getNC(p){
+  const el=document.getElementById(p+'-nc');
+  return el?parseInt(el.textContent||el.value):2;
+}
+function ncChange(p,delta){
+  const el=document.getElementById(p+'-nc');
+  let v=parseInt(el.textContent)+delta;
+  if(v<1)v=1;if(v>10)v=10;
+  el.textContent=v;gen(p);
+}
 
 function gen(p){
   const n=getNV(p),m=getNC(p);
@@ -978,7 +1413,7 @@ function gen(p){
       html+=`<input type="text" class="ci" id="${p}-a${i}${j}" placeholder="a${i+1}${j+1}">
         <span class="vl">x<sub>${j+1}</sub></span>`;
     }
-    const ops=(p==='g')?`<option value="<=">≤</option><option value=">=">≥</option><option value="=">=</option>`:
+    const ops=(p==='g'||p==='df')?`<option value="<=">≤</option><option value=">=">≥</option><option value="=">=</option>`:
       `<option value="<=">≤</option>`;
     html+=`<select id="${p}-op${i}" class="op-sel">${ops}</select>`;
     html+=`<input type="text" class="rhs" id="${p}-b${i}" placeholder="b${i+1}">`;
@@ -1029,6 +1464,9 @@ function solve(p){
   }else if(p==='d'){
     const sv=new SimplexSolver(c,A,b,isMax);const res=sv.solve();
     renderDual(res,inp,rid);
+  }else if(p==='df'){
+    const sv=new TwoPhaseSolver(c,A,b,types,isMax);const res=sv.solve();
+    renderTwoPhase(res,inp,rid);
   }
 
   div.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1036,7 +1474,7 @@ function solve(p){
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{
-  gen('s');gen('g');gen('gr');gen('d');
+  gen('s');gen('g');gen('gr');gen('d');gen('df');
 });
 </script>
 </body>
