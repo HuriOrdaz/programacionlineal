@@ -239,9 +239,7 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
         <div class="card-title">Configuración</div>
         <div class="config-row">
           <div class="cfg"><label>Variables:</label>
-            <select id="s-nv" onchange="gen('s')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <input type="number" id="s-nv" min="1" max="10" value="2" style="width:60px" onchange="gen('s')">
           </div>
           <div class="cfg"><label>Restricciones:</label>
             <div class="nc-counter">
@@ -291,9 +289,7 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
         <div class="card-title">Configuración</div>
         <div class="config-row">
           <div class="cfg"><label>Variables:</label>
-            <select id="g-nv" onchange="gen('g')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <input type="number" id="g-nv" min="1" max="10" value="2" style="width:60px" onchange="gen('g')">
           </div>
           <div class="cfg"><label>Restricciones:</label>
             <div class="nc-counter">
@@ -395,9 +391,7 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
         <div class="card-title">Configuración (Problema Primal — solo ≤)</div>
         <div class="config-row">
           <div class="cfg"><label>Variables:</label>
-            <select id="d-nv" onchange="gen('d')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <input type="number" id="d-nv" min="1" max="10" value="2" style="width:60px" onchange="gen('d')">
           </div>
           <div class="cfg"><label>Restricciones:</label>
             <div class="nc-counter">
@@ -448,9 +442,7 @@ td.bc{font-weight:700;color:var(--accent2);background:rgba(59,130,246,0.08)!impo
         <div class="card-title">Configuración</div>
         <div class="config-row">
           <div class="cfg"><label>Variables:</label>
-            <select id="df-nv" onchange="gen('df')">
-              <option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
+            <input type="number" id="df-nv" min="1" max="10" value="2" style="width:60px" onchange="gen('df')">
           </div>
           <div class="cfg"><label>Restricciones:</label>
             <div class="nc-counter">
@@ -1391,7 +1383,7 @@ function getNC(p){
 function ncChange(p,delta){
   const el=document.getElementById(p+'-nc');
   let v=parseInt(el.textContent)+delta;
-  if(v<1)v=1;if(v>10)v=10;
+  if(v<1)v=1;if(v>15)v=15;
   el.textContent=v;gen(p);
 }
 
